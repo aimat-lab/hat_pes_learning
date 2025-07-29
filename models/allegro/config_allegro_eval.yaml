@@ -1,0 +1,23 @@
+root: allegro_eval/dft_ID2/hat_eval
+
+r_max: 5.0
+
+
+validation_dataset: ase
+validation_dataset_file_name: nequip/my_data/dft_IDs/dft_eval/dft_eval.extxyz
+
+ase_args:
+    format: extxyz
+include_keys: #dataset_
+    - REF_energy
+    - REF_forces
+key_mapping:
+    REF_energy: total_energy
+    REF_forces: forces
+    
+chemical_symbols:
+  - H
+  - C
+  - N
+  - O
+  - S

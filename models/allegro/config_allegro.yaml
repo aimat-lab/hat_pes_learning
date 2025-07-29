@@ -1,0 +1,299 @@
+# This file serves as a starting example input file for Allegro
+# For a full, detailed set of general training+dataset options see configs/full.yaml in the NequIP repo: 
+# https://github.com/mir-group/nequip/blob/main/configs/full.yaml
+# This file additionally documents the Allegro-specific options
+
+
+# general
+
+# Two folders will be used during the training: 'root'/process and 'root'/'run_name'
+# run_name contains logfiles and saved models
+# process contains processed data sets
+# if 'root'/'run_name' exists, 'root'/'run_name'_'year'-'month'-'day'-'hour'-'min'-'s' will be used instead.
+root: allegro/results/dft_ID2
+run_name: dft_ID2
+
+# model initialization seed
+seed: 123456
+
+# data set seed, determines which data to sample from file
+dataset_seed: 123456
+
+# set true if a restarted run should append to the previous log file
+append: True
+
+# type of float to use, e.g. float32 and float64
+default_dtype: float64
+
+# -- network --
+# tell nequip which modules to build
+model_builders:
+ - allegro.model.Allegro
+ # the typical model builders from `nequip` can still be used:
+ - PerSpeciesRescale
+ - ForceOutput
+ - RescaleEnergyEtc
+
+# radial cutoff in length units
+r_max: 5.0
+
+# average number of neighbors in an environment is used to normalize the sum, auto precomputed it automitcally 
+avg_num_neighbors: auto
+
+# radial basis
+# set true to train the bessel roots
+BesselBasis_trainable: true
+
+# p-parameter in envelope function, as proposed in Klicpera, J. et al., arXiv:2003.03123 
+# sets it BOTH for the RadialBasisProjection AND the Allegro_Module
+PolynomialCutoff_p: 6  
+
+# symmetry
+# maximum order l to use in spherical harmonics embedding, 1 is basedline (fast), 2 is more accurate, but slower, 3 highly accurate but slow
+l_max: 2
+
+# whether to include E(3)-symmetry / parity
+# allowed: o3_full, o3_restricted, so3
+parity: o3_full  
+
+# number of tensor product layers, 1-3 usually best, more is more accurate but slower
+num_layers: 3
+
+# number of features, more is more accurate but slower, 1, 4, 8, 16, 64, 128 are good options to try depending on data set 64
+env_embed_multiplicity: 64
+
+# whether or not to embed the initial edge, true often works best
+embed_initial_edge: true
+
+# hidden layer dimensions of the 2-body embedding MLP
+two_body_latent_mlp_latent_dimensions: [128, 256, 512, 1024]
+# nonlinearity used in the 2-body embedding MLP
+two_body_latent_mlp_nonlinearity: silu
+# weight initialization of the 2-body embedding MLP
+two_body_latent_mlp_initialization: uniform
+
+# hidden layer dimensions of the latent MLP
+# these MLPs are cheap if you have have large l/env_embed_multiplicity, so a good place to put model capacity if you can afford it
+# only if you are in the ultra-fast/scalable regime, make these smaller
+latent_mlp_latent_dimensions: [1024, 1024, 1024]
+
+# nonlinearity used in the latent MLP
+latent_mlp_nonlinearity: silu
+
+# weight initialization of the latent MLP
+latent_mlp_initialization: uniform
+
+# whether to use a resnet update in the scalar latent latent space, true works best usually
+latent_resnet: true
+
+# hidden layer dimensions of the environment embedding mlp, none work best (will build a single linear layer)
+env_embed_mlp_latent_dimensions: []
+
+# nonlinearity used in the environment embedding mlp
+env_embed_mlp_nonlinearity: null
+
+# weight initialzation of the environment embedding mlp
+env_embed_mlp_initialization: uniform
+
+# - end allegro layers -
+
+# Final MLP to go from Allegro latent space to edge energies:
+
+# hidden layer dimensions of the per-edge energy final MLP
+edge_eng_mlp_latent_dimensions: [128]
+
+# nonlinearity used in the per-edge energy final MLP
+edge_eng_mlp_nonlinearity: null
+
+# weight initialzation in the per-edge energy final MLP
+edge_eng_mlp_initialization: uniform
+
+# -- data --
+# there are two options to specify a dataset, npz or ase
+# npz works with npz files, ase can ready any format that ase.io.read can read
+# IMPORTANT: in most cases working with the ase option and an extxyz file is by far the simplest way to do it and we strongly recommend using this
+# simply provide a single extxyz file that contains the structures together with energies and forces (generated with ase.io.write(atoms, format='extxyz', append=True))
+# for a simple snippet to do this, see the gists here: https://github.com/simonbatzner
+
+# npz option
+dataset: ase                                                                       # type of data set, can be npz or ase
+#dataset_url: http://quantum-machine.org/gdml/data/npz/aspirin_ccsd.zip             # url to download the npz. optional
+dataset_file_name: nequip/my_data/dft_IDs/dft_ID2/dft_ID2.extxyz                          # path to data set file
+ase_args:
+    format: extxyz
+include_keys: #dataset_
+    - REF_energy
+    - REF_forces
+key_mapping:
+    REF_energy: total_energy
+    REF_forces: forces
+
+validation_dataset: ase
+validation_dataset_file_name: nequip/my_data/dft_IDs/dft_test/dft_test.extxyz
+#validation_ase_args:
+#        format: extxyz
+#validation_include_keys:
+#        - energy
+#validation_key_mapping:
+#        force: forces
+
+
+# ase option
+# dataset: ase
+# dataset_file_name: filename.extxyz
+# ase_args:
+#   format: extxyz
+
+# A mapping of chemical species to type indexes is necessary if the dataset is provided with atomic numbers instead of type indexes.
+# A list of atomic types to be found in the data. The NequIP types will be named with the chemical symbols, and inputs with the correct atomic numbers will be mapped to the corresponding types.
+chemical_symbols:
+  - H
+  - C
+  - N
+  - O
+  - S
+
+# logging
+# whether to use weight and biases (see wandb.ai)
+wandb: true
+
+# project name in wandb
+wandb_project: allegro_for_hat_final_3
+
+# the same as python logging, e.g. warning, info, debug, error. case insensitive
+verbose: info
+
+log_batch_freq: 10                                                                 # batch frequency, how often to print training errors withinin the same epoch
+log_epoch_freq: 1                                                                  # epoch frequency, how often to print 
+save_checkpoint_freq: -1                                                           # frequency to save the intermediate checkpoint. no saving of intermediate checkpoints when the value is not positive.
+save_ema_checkpoint_freq: -1                                                       # frequency to save the intermediate ema checkpoint. no saving of intermediate checkpoints when the value is not positive.
+
+# training
+# number of training samples to use
+n_train: 65514
+
+# number of validation samples to use
+n_val: 7291
+
+# batch size, we found it important to keep this small for most applications including forces (1-5); for energy-only training, higher batch sizes work better
+batch_size: 5
+validation_batch_size: 10
+# stop training after _ number of epochs, we set a very large number here, it won't take this long in practice and we will use early stopping instead
+max_epochs: 1000
+
+# learning rate, we found values between 0.002 and 0.0005 to work best - this is often one of the most important hyperparameters to tune
+learning_rate: 0.001
+
+# can be random or sequential. if sequential, first n_train elements are training, next n_val are val, else random, usually random is the right choice
+#train_val_split: random
+
+# If true, the data loader will shuffle the data, almost always a good idea
+shuffle: true
+
+# metrics used for scheduling and saving best model. Options: `set`_`quantity`, set can be either "train" or "validation, "quantity" can be loss or anything that appears in the validation batch step header, such as f_mae, f_rmse, e_mae, e_rmse
+metrics_key: validation_loss
+
+# use an exponential moving average of the weights
+# if true, use exponential moving average on weights for val/test, usually helps a lot with training, in particular for energy errors
+use_ema: true
+
+# ema weight, typically set to 0.99 or 0.999
+ema_decay: 0.99
+
+# whether to use number of updates when computing averages
+ema_use_num_updates: true
+
+# loss function
+# different weights to use in a weighted loss functions
+# if you use peratommseloss, then this is already in a per-atom normalized space (both E/F are per-atom quantities) 
+# in that case, 1:1 works best usually PerAtomMSELoss
+loss_coeffs:
+  forces: 1.
+  total_energy:          
+    - 1.
+    - PerAtomMSELoss
+
+# output metrics
+metrics_components:
+  - - forces                               # key 
+    - mae                                  # "rmse" or "mae"
+  - - forces
+    - rmse
+  - - forces
+    - mae
+    - PerSpecies: True                     # if true, per species contribution is counted separately
+      report_per_component: False          # if true, statistics on each component (i.e. fx, fy, fz) will be counted separately
+  - - forces                                
+    - rmse                                  
+    - PerSpecies: True                     
+      report_per_component: False    
+  - - total_energy
+    - mae    
+  - - total_energy
+    - mae
+    - PerAtom: True                        # if true, energy is normalized by the number of atoms
+
+
+# optimizer
+# default optimizer is Adam 
+optimizer_name: Adam
+optimizer_amsgrad: false
+optimizer_betas: !!python/tuple
+  - 0.9
+  - 0.999
+optimizer_eps: 1.0e-08
+optimizer_weight_decay: 0.
+
+# gradient clipping using torch.nn.utils.clip_grad_norm_
+# see https://pytorch.org/docs/stable/generated/torch.nn.utils.clip_grad_norm_.html#torch.nn.utils.clip_grad_norm_
+# setting to inf or null disables it
+max_gradient_norm: null
+
+# lr scheduler, drop lr if no improvement for 50 epochs
+# on-plateau, reduce lr by factory of lr_scheduler_factor if metrics_key hasn't improved for lr_scheduler_patience epoch
+lr_scheduler_name: ReduceLROnPlateau
+lr_scheduler_patience: 50
+lr_scheduler_factor: 0.8
+
+# early stopping if max 7 days is reached or lr drops below 1e-5 or no improvement on val loss for 100 epochs
+
+early_stopping_lower_bounds:
+  LR: 1.0e-6
+
+early_stopping_patiences:
+  validation_loss: 50
+
+# we provide a series of options to shift and scale the data
+# these are for advanced use and usually the defaults work very well
+# the default is to scale the energies and forces by scaling them by the force standard deviation and to shift the energy by its mean
+# in certain cases, it can be useful to have a trainable shift/scale and to also have species-dependent shifts/scales for each atom
+
+per_species_rescale_scales_trainable: true
+# whether the scales are trainable. Defaults to False. Optional
+per_species_rescale_shifts_trainable: true
+# whether the shifts are trainable. Defaults to False. Optional
+per_species_rescale_shifts: dataset_per_species_total_energy_mean
+# initial atomic energy shift for each species. default to the mean of per atom energy. Optional
+# the value can be a constant float value, an array for each species, or a string
+# string option include: 
+# *  "dataset_per_atom_total_energy_mean", which computes the per atom average
+# *  "dataset_per_species_total_energy_mean", which automatically compute the per atom energy mean using a GP model
+per_species_rescale_scales: dataset_per_species_total_energy_std
+
+global_rescale_shift: null
+global_rescale_scale: null
+# initial atomic energy scale for each species. Optional.
+# the value can be a constant float value, an array for each species, or a string
+# string option include: 
+# *  "dataset_per_atom_total_energy_std", which computes the per atom energy std
+# *  "dataset_per_species_total_energy_std", which uses the GP model uncertainty
+# *  "dataset_per_species_forces_rms", which compute the force rms for each species
+# If not provided, defaults to dataset_per_species_force_rms or dataset_per_atom_total_energy_std, depending on whether forces are being trained.
+# per_species_rescale_kwargs: 
+#   total_energy: 
+#     alpha: 0.001
+#     max_iteration: 20
+#     stride: 100
+# keywords for ridge regression decomposition of per specie energy. Optional. Defaults to 0.001. The value should be in the range of 1e-3 to 1e-2
+# per_species_rescale_arguments_in_dataset_units: True
+# if explicit numbers are given for the shifts/scales, this parameter must specify whether the given numbers are unitless shifts/scales or are in the units of the dataset. If ``True``, any global rescalings will correctly be applied to the per-species values.
