@@ -1,0 +1,13 @@
+solvent: 'None'  #   'None' 'water'
+num_threads: 40  # for cluster conformer generation
+conformers:
+    crest_method: 'none' 
+    crest_fast: 'false'
+    conf_types: 'low_random' # choose number/2 lowest energy conformers and number/2 random conformers, alternative: choose number 'lowest'
+    number: 10
+nms:
+    num_samples: 20             # number of samples per molecule
+    temperature: 50             # K, is used for scaling
+    delta_E_max: 5.0            # eV, maximum energy difference between generated geometry and initial conformer energy
+    ci_range: [0.005, 0.1]      # scaling parameter 
+    
