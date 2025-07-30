@@ -27,7 +27,7 @@ example_scripts/
 ### Dependencies
 
 Make sure the following tools and packages are available:
-- `xtb` (with environment variable `XTBPATH`) including `crest` for conformer generation ([text](https://xtb-docs.readthedocs.io/en/latest/index.html))
+- `xtb` (with environment variable `XTBPATH`) including `crest` for conformer generation ([xtb](https://xtb-docs.readthedocs.io/en/latest/index.html))
 - Python 3.8+
 - RDKit
 - `numpy`, `scipy`, `matplotlib`, `pandas`, `scikit-learn`, `pyyaml`
