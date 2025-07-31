@@ -20,8 +20,7 @@ hat_sampler = HATSampling(
     indir=rad_dir,
     outdir=outdir,
     sample_name=sample_name,
-    solvent=None,
-    hat_dist=0.8
+    solvent=None
 )
 
 # Generate HAT samples
