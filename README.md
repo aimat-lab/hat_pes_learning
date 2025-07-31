@@ -1,7 +1,7 @@
 # hat_pes_learning
 Data generation scripts and ML potential training scripts for the paper 'Learning Potential Energy Surfaces of Hydrogen Atom Transfer Reactions in Peptides'.
 
-# ML Potential Data Generation for Hydrogen Atom Transfer in Peptides
+# Data Generation for Hydrogen Atom Transfer in Peptides
 
 This repository provides a modular pipeline to generate training data (coordinates, energies, forces) for machine-learned potentials targeting hydrogen atom transfer (HAT) reactions in peptides.
 
