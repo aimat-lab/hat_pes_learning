@@ -16,10 +16,33 @@ import csv
 import os
 
 class NormalModeSampling():
-    
+    """
+    A class to perform Normal Mode Sampling (NMS) on molecular conformers to 
+    generate perturbed geometries, energies, and forces (using xTB).
+    """
     
     def __init__(self, indir,sample_name, num_samples, delta_E_max, temperature, ci_range, solvent):
-        
+        """
+        Initialize the NMS workflow and store core parameters.
+
+        Parameters
+        ----------
+        indir : str
+            Path to directory with input conformers.
+        sample_name : str
+            Name for the sample output set.
+        num_samples : int
+            Number of samples to generate (distributed across conformers).
+        delta_E_max : float
+            Max allowed energy deviation [eV] from equilibrium.
+        temperature : float
+            Sampling temperature (Kelvin).
+        ci_range : tuple(float, float)
+            Range for random mode scaling (see nms_fcts.random_ci_01).
+        solvent : str
+            Solvent model used by xtb.
+        """
+
         self.indir = indir
         self.sample_name = sample_name
         self.num_samples = num_samples
@@ -39,25 +62,36 @@ class NormalModeSampling():
         self.scaled_energies_all_list = []
         
     def do_nms(self, list_dirs = None, list_dir_files_coords= None, list_dir_files_energies = None, outdir = None):
+       """
+        Main function to perform Normal Mode Sampling for all molecules in given directories.
+
+        Parameters
+        ----------
+        list_dirs : list of str, optional
+            List of directories, one for each molecule. If None, will auto-detect.
+        list_dir_files_coords : list of str, optional
+            List of XYZ coordinate file paths for each conformer set.
+        list_dir_files_energies : list of str, optional
+            List of .npy energy file paths for each conformer set.
+        outdir : str, optional
+            Directory for output. If None, uses input dir structure.
+        """
        
-        # if list of indirectories is not given, then get access to files
-       #
+
        if list_dirs == None:
            path_to_files = self.indir
            #path to conformer files    
            list_dir_files_coords =  glob.glob("{}/*/**/coords_conformers_selected.xyz".format(path_to_files))
-           #print(list_dir_files_coords)
-           # here function to randomly select conformers from all conformers file and write into file selected
            
            #list_dir_files_energies =  glob.glob("{}/*/**/energy_conformers_selected.npy".format(path_to_files))
            list_dirs = glob.glob("{}/*/**/".format(path_to_files))
        
        # prepare dicts_i
-       dict_ki = {}
-       dict_ci = {}
+       dict_ki = {} # force constants per mol
+       dict_ci = {} # ci mode amplitudes
        dict_c_sum = {}
        dict_r_i = {}
-       dict_rel_bond_i = {}
+       dict_rel_bond_i = {} # relative bond lengths
        dict_num_atoms = {}
        dict_num_samples_per_mol = {}
        mol_sequence = []

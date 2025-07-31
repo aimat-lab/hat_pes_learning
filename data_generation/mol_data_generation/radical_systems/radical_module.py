@@ -15,9 +15,40 @@ from matplotlib import colors
 from scipy.spatial.distance import euclidean
 
 class RadicalSampling():
-    
+    """
+    Class for generating and exporting radical systems by removing hydrogens to create radicals
+    from molecules and sampling both intra- and inter-molecular radical structures.
+    """
+
     def __init__(self,insystem_list, indir_list,indir_info,init_indir_list, solvent, t_nms, delE_nms, protonated=False, rad_dist = 2.0, infile_structure = 'cluster'):
         
+        """
+        Initialize the RadicalSampling workflow and store parameters.
+
+        Parameters
+        ----------
+        insystem_list : list
+            List of systems (strings) used in sampling.
+        indir_list : list
+            List of directories containing input data for NMS samples.
+        indir_info : str
+            Directory containing molecular info and logs.
+        init_indir_list : list
+            List of directories with unperturbed initial structures.
+        solvent : str
+            Solvent model used in XTB.
+        t_nms : int
+            NMS sampling temperature (K).
+        delE_nms : float
+            Max allowed NMS sampling energy window (eV).
+        protonated : bool
+            Whether to sample protonated systems (affects H selection).
+        rad_dist : float
+            Minimum allowed distance between radical and H atoms in combined system.
+        infile_structure : str
+            Input directory structure ('cluster' or flat).
+        """
+
         self.indir_list = indir_list
         self.indir_info = indir_info
         self.insystem_list = insystem_list
@@ -45,18 +76,30 @@ class RadicalSampling():
         self.energies_all_list_intra = None
         
     def do_intra_rad_sampling(self,sample_name, num_systems, num_config,outdir, mode = 'H_radical', radical_opt = False):
-        
-    
-           #path_to_files = self.indir  mode = 'H_radical', radical_opt = False
-           
-           #list_dirs_mols = glob.glob("{}/*/".format(path_to_files)) #adjust to file structure
-           #print(list_dirs_mols)
-           #path to nms files   
-           #list_dir_files_coords = glob.glob("{}/*/**/*_nms_samples_{}.xyz".format(path_to_files, self.sample_name))
 
+       """
+            Perform intra-molecular radical sampling: for each molecule,
+            generate radicals by removing an H atom, possibly optimize, and export coords, energies, and forces.
+
+            Parameters
+            ----------
+            sample_name : str
+                Name for exported files.
+            num_systems : int
+                Number of systems to randomly select (0=all in list).
+            num_config : int
+                Number of radical configs per system.
+            outdir : str
+                Output directory.
+            mode : str
+                Radical mode ('H_radical' = remove hydrogen to create radical).
+            radical_opt : bool
+                If True, optimize radical geometry after H removal.
+        """ 
+
+       # Gather input XYZ file paths for intra sampling
        coords_dir_list_mols = self.get_infile_path_list_intra(self.indir_list)
        
-       #print(coords_dir_list_mols)
 
        coords_sampled_all, elements_sampled_all = [], []
        energies_sampled_all, forces_sampled_all = [], []
@@ -71,29 +114,14 @@ class RadicalSampling():
        coords_h2 = []
        
        if num_systems == 0:
-           
+           #Loop through *all* systems in coords_dir_list_mols
            for coords_dir in coords_dir_list_mols:
-               
-               # choose randomly 1 molecule from file list
-               # draw random infile, load nms coords
-               #mols_paths_chosen = np.random.choice(coords_dir_list_mols, 1, replace=True)
-               #
-               #print('chosen 1', mols_paths_chosen[0], 'chosen 2', mols_paths_chosen[1])
-               # designate [0] as mol1 with H1 and [1] radical
-               
-               ## need to adapt to new structure! 
+
                
                path_to_coords_1 = coords_dir
-               #print(coords_dir)
-               #glob.glob('{}*_nms_samples_{}.xyz'.format(mols_chosen[0],nms_name))  ##adjust
-               #print(path_to_coords_1)
-               
-               #print(path_to_coords_1)
+
                coords_all_1, elements_all_1 = fu.readXYZs(path_to_coords_1)
                
-               
-               ## need to change to get mol names from chosen and vib info from indir
-               #print('path_to_coords_1', path_to_coords_1)
 
                
                if self.infile_structure == 'cluster':
@@ -108,7 +136,7 @@ class RadicalSampling():
                tot_chr = pos_chr_0+neg_chr_0
 
                
-
+               # # Identify bonds and hydrogens
                # identify bonds and H
                if mode == 'H_radical':
                    
@@ -121,7 +149,6 @@ class RadicalSampling():
                    atms_idx_h_tuples_1 = rf.get_aa_h(mol_name_1, bond_idx_list_1, bond_atm_list_1, bond_lengths_list_1, protonated = self.protonated) # protonated = 
 
                    # dictionary with correct length/ formula for dipeptides, if length not ok, then remove
-                   # oder durch nms gehen und consistent length checken!!
                    
                    for config_i in range(num_config):
                                  
@@ -154,11 +181,7 @@ class RadicalSampling():
                               
                               continue
                            
-                           
-                          #remove atom from molecule 2 and update 
-                           
-        #                 rad_idx,h1_idx_new,r2_idx_new, coords_init, elements_init, bond_idx_list, bond_atm_list, bond_lengths_list, coords_before, elements_before, bond_idx_list_before, bond_atm_list_before, bond_lengths_list_before, coords_before_h2 = rf.rmv_h_from_mol_intra(
-        #                 h2, r1,h1,r2, coords_1, elements_1, bond_idx_list_1, bond_atm_list_1, bond_lengths_list_1)
+                          # Remove chosen H from molecule to create radical
                            
                           rad_idx_new, h1_idx_new, r2_idx_new, coords_init, elements_init, bond_idx_list_new, bond_atm_list_new, bond_lenghts_list_new, bond_idx_list_before, bond_atm_list_before, bond_lengths_list_before, coords_before_h1,  rad_idx_new_2, h1_idx_new_2, r2_idx_new_2, coords_before_1, elements_before_1, bond_idx_list_new_2, bond_atm_list_new_2, bond_lenghts_list_new_2, coords_before, elements_before, coords_before_h2 = rf.rmv_h_from_mol_intra(
                                h2, r1, h1, r2, coords_1, elements_1, bond_idx_list_1, bond_atm_list_1, bond_lengths_list_1)
@@ -178,43 +201,17 @@ class RadicalSampling():
                           else:
                                coords_final_1 = coords_init
                                elements_final_1 = elements_init
-                               #print(len(coords_final_1))
-                               #print(len(elements_final_1))
-                        
-                           
-                          # state 2 coords_before_1, elements_before_1
-                          '''
-                          if radical_opt:
-                              print('optimize radical') # rm outdir?
-                              num_atoms = len(coords_before_1)
-                              freeze_list = rf.get_neighbors(rad_idx_new_2, bond_idx_list_new_2, bond_atm_list_new_2, num_atoms)
-                              coords_final_2, elements_final_2 = xtb.optimize_geometry(coords_before_1, elements_before_1,charge = tot_chr, unp_e = 1, freeze_atms = freeze_list, solvent = self.solvent)
-                              if coords_final_2 == [] or len(coords_final_2) < num_atoms:
-                                   continue
-                            #print(coords_2)
-                          else:
-                              coords_final_2 = coords_before_1
-                              elements_final_2 = elements_before_1
-                                #print(len(coords_final_2))
-                                #print(len(elements_final_2))
-                          '''
-                                
+
     
                                    
                             
                                
                                    
                             # calculate E and F
-                            
-                            # state 1
+     
                           e_system_1 = xtb.single_point_energy(coords_final_1, elements_final_1, charge = tot_chr, unp_e = 1, solvent = self.solvent)
                           f_system_1 = xtb.single_force(coords_final_1, elements_final_1, charge = tot_chr, unp_e = 1, solvent = self.solvent)
                            
-                           #print(len(f_system_1))
-                            
-                            # state 2
-                          #e_system_2 = xtb.single_point_energy(coords_final_2, elements_final_2, charge = tot_chr, unp_e = 1, solvent = self.solvent)
-                          #f_system_2 = xtb.single_force(coords_final_2, elements_final_2, charge = tot_chr, unp_e = 1, solvent = self.solvent)
                           
                           try:
                             if f_system_1.all() != None:                              
@@ -231,37 +228,7 @@ class RadicalSampling():
                                   
                           if e_system_1 != None and forces and dist_er == False:
                               no_system = False
-                                
-                        
 
-                           
-
-                          
-                          '''
-                          try:
-                              if f_system_1.all() != None and f_system_2.all() != None:                              
-                                  if len(f_system_1) == len(coords_final_1) and len(f_system_2) == len(coords_final_2):
-                                      forces = True
-                          except:
-                              try:
-                                  if f_system_1 == None:
-                                      print('forces none')
-                                      forces = False
-                              except:
-                                  pass
-                              try:
-                                  if f_system_2 == None:
-                                      print('forces none')
-                                      forces = False
-                              except:
-                                  pass
-                                    
-                        
-                          if e_system_1 != None and e_system_2 != None and forces and dist_er == False:
-                              #print('no system False', e_system_1, e_system_2, len(f_system_1), len(f_system_2))
-                              no_system = False
-                          '''
-                                
                          
                       coords_sampled_all.append(coords_final_1)
 
@@ -296,39 +263,7 @@ class RadicalSampling():
                       idx_r2.append(r2_idx_new)
                       coords_h2.append(coords_before_h1)
                        
-                      #print(mol_name_1)
-                        
-                      #print('system 1', len(coords_final_1), len(elements_final_1), len(f_system_1), type(coords_final_1), type(f_system_1))      
-                       
-                      #print('system 2', len(coords_final_2), len(elements_final_2), len(f_system_2),  type(coords_final_2), type(f_system_2))
-        
-                      # also save bond, rad idx, H1 idx information! delta E! add E information!
 
-                       
-                      ''' 
-                      h_rad_dist_2 = euclidean(coords_final_2[h1_idx_new_2], coords_final_2[rad_idx_new_2])
-                      #print('h rad dist', h_rad_dist)
-                       
-                      h_rad_distances.append(h_rad_dist_2)
-                       
-                      system_names.append(mol_name_1)
-                      #donor_names.append(mol_name_1)
-                      #radical_names.append(mol_name_2)
-                      #num_atms_don.append(len(coords_1_new))
-                      #num_atms_rad.append(len(coords_2_new))
-                      bonds_systems.append(bond_idx_list_new_2)
-                      idx_radicals.append(rad_idx_new_2)
-                      idx_h0s.append(h1_idx_new_2)                   
-                      idx_r2.append(r2_idx_new_2)
-                      coords_h2.append(coords_before_h2)
-                      '''
-                       
-        
-                       # also save bond, rad idx, H1 idx information! delta E! add E information!
-
-                       
-                       #print('len coords', len(coords_sampled_all))
-                       #print('len forces', len(forces_sampled_all))
                        
                        
                         
@@ -339,6 +274,7 @@ class RadicalSampling():
            
            
        else: 
+           #  Randomly sample num_systems from input list
            for system_i in range(num_systems):
                
                # choose randomly 1 molecule from file list
@@ -444,24 +380,7 @@ class RadicalSampling():
                                elements_final_1 = elements_init
                                #print(len(coords_final_1))
                                #print(len(elements_final_1))
-        
-                          # state 2 coords_before_1, elements_before_1
-                          '''
-                          if radical_opt:
-                              print('optimize radical') # rm outdir?
-                              num_atoms = len(coords_before_1)
-                              freeze_list = rf.get_neighbors(rad_idx_new_2, bond_idx_list_new_2, bond_atm_list_new_2, num_atoms)
-                              coords_final_2, elements_final_2 = xtb.optimize_geometry(coords_before_1, elements_before_1,charge = tot_chr, unp_e = 1, freeze_atms = freeze_list, solvent = self.solvent)
-                              if coords_final_2 == [] or len(coords_final_2) < num_atoms:
-                                   continue
-                            #print(coords_2)
-                          else:
-                              coords_final_2 = coords_before_1
-                              elements_final_2 = elements_before_1
-                                #print(len(coords_final_2))
-                                #print(len(elements_final_2))
-                          '''
-                                   
+  
                                    
                                
                                    
@@ -471,14 +390,7 @@ class RadicalSampling():
                           e_system_1 = xtb.single_point_energy(coords_final_1, elements_final_1, charge = tot_chr, unp_e = 1, solvent = self.solvent)
                           f_system_1 = xtb.single_force(coords_final_1, elements_final_1, charge = tot_chr, unp_e = 1, solvent = self.solvent)
                            
-                           #print(len(f_system_1))
-                            
-                            # state 2
-                          #e_system_2 = xtb.single_point_energy(coords_final_2, elements_final_2, charge = tot_chr, unp_e = 1, solvent = self.solvent)
-                          #f_system_2 = xtb.single_force(coords_final_2, elements_final_2, charge = tot_chr, unp_e = 1, solvent = self.solvent)
-                           
-                           #print(len(f_system_2))
-        
+
                           try:
                               if f_system_1.all() != None:                              
                                   if len(f_system_1) == len(coords_final_1):
@@ -535,30 +447,6 @@ class RadicalSampling():
                       # also save bond, rad idx, H1 idx information! delta E! add E information!
     
                        
-                      '''
-                      h_rad_dist_2 = euclidean(coords_final_2[h1_idx_new_2], coords_final_2[rad_idx_new_2])
-                      #print('h rad dist', h_rad_dist)
-                       
-                      h_rad_distances.append(h_rad_dist_2)
-                       
-                      system_names.append(mol_name_1)
-                      #donor_names.append(mol_name_1)
-                      #radical_names.append(mol_name_2)
-                      #num_atms_don.append(len(coords_1_new))
-                      #num_atms_rad.append(len(coords_2_new))
-                      bonds_systems.append(bond_idx_list_new_2)
-                      idx_radicals.append(rad_idx_new_2)
-                      idx_h0s.append(h1_idx_new_2)                   
-                      idx_r2.append(r2_idx_new_2)
-                      coords_h2.append(coords_before_h2)
-                      '''
-        
-                       # also save bond, rad idx, H1 idx information! delta E! add E information!
-    
-                       
-                       #print('len coords', len(coords_sampled_all))
-                       #print('len forces', len(forces_sampled_all))
-                       
                        
                         
                else:
@@ -568,7 +456,7 @@ class RadicalSampling():
            
 
        
-       # add to class sample parameter dictionary (?)
+       # Store sampled data in class and export to files
        self.sample_parameters_intra['system_names'] = system_names
        self.sample_parameters_intra['bonds_systems'] = bonds_systems
        self.sample_parameters_intra['idx_radicals'] = idx_radicals
@@ -583,9 +471,7 @@ class RadicalSampling():
        
        if not os.path.exists(outdir):
            os.makedirs(outdir)
-           
-       
-       #check before exporting
+
        
        
        print('len coords final', len(coords_sampled_all))
@@ -602,212 +488,34 @@ class RadicalSampling():
        np.save('{}/{}_rad_intra_systems_energies.npy'.format(outdir, sample_name), energies_sampled_all, allow_pickle=True) 
        np.save('{}/{}_rad_intra_systems_radii.npy'.format(outdir, sample_name,), h_rad_distances, allow_pickle=True) 
     
-    
-    def do_inter_rad_sampling(self,sample_name, num_systems, num_config, outdir, rad_radius = [1.0, 4.2], mode = 'H_radical', radical_opt = False):
-        
-    
-           #path_to_files = self.indir
-           
-           #list_dirs_mols = glob.glob("{}/*/".format(path_to_files)) #adjust to file structure
-           #print(list_dirs_mols)
-           #path to nms files   
-           #list_dir_files_coords = glob.glob("{}/*/**/*_nms_samples_{}.xyz".format(path_to_files, self.sample_name))
 
-       #coords_dir_list_mols = self.coords_infile_path_list
-       
-       coords_dir_list_mols = self.get_infile_path_list(self.indir_list)
-
-       coords_sampled_all, elements_sampled_all = [], []
-       energies_sampled_all, forces_sampled_all = [], []
-       h_rad_distances = []
-       system_names = []
-       radical_names, donor_names = [],[]
-       num_atms_rad, num_atms_don = [],[]
-       bonds_systems = []
-       idx_radicals, idx_h0s = [],[]
-       idx_r2 = []
-       
-       for system_i in range(num_systems):
-           
-           # choose randomly 2 molecules from file list
-           # draw random infile, load nms coords
-           mols_paths_chosen = np.random.choice(coords_dir_list_mols, 2, replace=True)
-           #
-           #print('chosen 1', mols_paths_chosen[0], 'chosen 2', mols_paths_chosen[1])
-           # designate [0] as mol1 with H1 and [1] radical
-           
-           ## need to adapt to new structure! 
-           
-           path_to_coords_1 = mols_paths_chosen[0]
-           #glob.glob('{}*_nms_samples_{}.xyz'.format(mols_chosen[0],nms_name))  ##adjust
-           #print(path_to_coords_1)
-           
-           #print(path_to_coords_1)
-           coords_all_1, elements_all_1 = fu.readXYZs(path_to_coords_1)
-           
-           path_to_coords_2 = mols_paths_chosen[1]
-           
-           coords_all_2, elements_all_2 = fu.readXYZs(path_to_coords_2)
-           
-           ## need to change to get mol names from chosen and vib info from indir
-           #print('path_to_coords_1', path_to_coords_1)
-           #print('path_to_coords_2', path_to_coords_2)
-           
-           if self.infile_structure == 'cluster':
-               path_to_log_1, mol_name_1, path_to_log_2, mol_name_2 = self.get_mol_paths_cluster(mols_paths_chosen[0], mols_paths_chosen[1])
-               
-           else:
-               path_to_log_1, mol_name_1, path_to_log_2, mol_name_2 = self.get_mol_paths(mols_paths_chosen[0], mols_paths_chosen[1])
-           
-           
-           
-           ## need to add more charge combinations!!
-           # get charges seperately and then add?
-           # count + and - in strings?
-           
-           pos_chr_0 = mol_name_1.count('+')
-           neg_chr_0 = -1*mol_name_1.count('-')
-           tot_chr_0 = pos_chr_0+neg_chr_0
-           
-           pos_chr_1 = mol_name_2.count('+')
-           neg_chr_1 = -1*mol_name_2.count('-')
-           tot_chr_1 = pos_chr_1+neg_chr_1
-           
-           tot_chr = tot_chr_0+tot_chr_1
-           
-           #print(mol_name_1, mol_name_2)
-           # identify bonds and H
-           if mode == 'H_radical':
-               
-               # get bond info here
-               bond_idx_list_1,bond_atm_list_1, bond_lengths_list_1 = rf.read_out_bonds(path_to_log_1)     
-               #print('bond idx list 1', bond_idx_list_1)    
-               bond_idx_list_2,bond_atm_list_2, bond_lengths_list_2 = rf.read_out_bonds(path_to_log_2)  
-               # differentiate cases amide, caps, aa
-               
-               
-               
-               # all possible h tuples
-               atms_idx_h_tuples_1 = rf.get_aa_h(mol_name_1, bond_idx_list_1, bond_atm_list_1, bond_lengths_list_1, protonated = self.protonated) # protonated = 
-               atms_idx_h_tuples_2 = rf.get_aa_h(mol_name_2, bond_idx_list_2, bond_atm_list_2, bond_lengths_list_2, protonated = self.protonated)
-               
-               
-               
-               for config_i in range(num_config):
-                   
-                   # choose nms coords from coords of the two chosen molecules
-                   rand_int_1 = random.randrange(0,len(coords_all_1))
-                   coords_1 = coords_all_1[rand_int_1]
-                   elements_1 = elements_all_1[rand_int_1]
-                   
-                   rand_int_2 = random.randrange(0,len(coords_all_2))
-                   coords_2 = coords_all_2[rand_int_2]
-                   elements_2 = elements_all_2[rand_int_2]
-                   
-                   
-                   
-                   # choose H
-                   
-                   
-                   h_idx_1, h_bond_1 = rf.get_h_idx(atms_idx_h_tuples_1)
-
-                   h_idx_rm, rad_pos_idx = rf.get_h_idx(atms_idx_h_tuples_2)
-                   
-                   
-                   
-                   #remove atom from molecule 2 and update 
-                   
-                   rad_idx, coords_2_init, elements_2_init, bond_idx_list_2, bond_atm_list_2, bond_lengths_list_2, coords_before_2, elements_before_2, bond_idx_list_before_2, bond_atm_list_before_2, bond_lengths_list_before_2 = rf.rmv_h_from_mol(
-                       h_idx_rm, rad_pos_idx, coords_2, elements_2, bond_idx_list_2, bond_atm_list_2, bond_lengths_list_2)
-                   
-                   # optimize radical 
-                   # add flag radical_opt 
-                   if radical_opt:
-                       #print('optimize radical') # rm outdir?
-                       num_atoms = len(coords_2_init)
-                       freeze_list = rf.get_neighbors(rad_idx, bond_idx_list_2, bond_atm_list_2, num_atoms)
-                       coords_2, elements_2 = xtb.optimize_geometry(coords_2_init, elements_2_init,charge = tot_chr_1, unp_e = 1, freeze_atms = freeze_list, solvent = self.solvent)
-                       if coords_2 == [] or len(coords_2) < num_atoms:
-                           continue
-                    #print(coords_2)
-                   else:
-                       coords_2 = coords_2_init
-                       elements_2 = elements_2_init
-                       
-                   # translate H1 and R to (0,0)
-                   coords_1_new = rf.translate_to_center(coords_1, h_idx_1)
-                   coords_2_new = rf.translate_to_center(coords_2, rad_idx)               
-                   
-
-                   # then for search system
-                   # find_system find_system_V2
-                   coords_system,elements_system, bonds_system, radius, rad_idx_new, e_system, f_system = rf.find_system(coords_1_new, coords_2_new, h_idx_1, h_bond_1, rad_idx, elements_1, elements_2, bond_idx_list_1, bond_idx_list_2, rad_radius,tot_chr, self.solvent, self.rad_dist)
-                   
-                   #print(coords_system)  
-               
-                   coords_sampled_all.append(coords_system)
-                   elements_sampled_all.append(elements_system)
-                   h_rad_distances.append(radius)
-                   system_name = '{}_and_{}'.format(mol_name_1, mol_name_2)
-                   system_names.append(system_name)
-                   donor_names.append(mol_name_1)
-                   radical_names.append(mol_name_2)
-                   num_atms_don.append(len(coords_1_new))
-                   num_atms_rad.append(len(coords_2_new))
-                   bonds_systems.append(bonds_system)
-                   idx_radicals.append(rad_idx_new)
-                   idx_h0s.append(h_idx_1)
-                   
-                   idx_r2.append(h_bond_1)
-                   
-
-                   # also save bond, rad idx, H1 idx information! delta E! add E information!
-                   energies_sampled_all.append(e_system)
-                   forces_sampled_all.append(f_system)
-           else:
-               print('Need to implement reaction mode in radical functions.')
-           
-            
-           
-
-       
-       # add to class sample parameter dictionary (?)
-       self.sample_parameters_inter['system_names'] = system_names
-       self.sample_parameters_inter['donor_names'] = donor_names
-       self.sample_parameters_inter['radical_names'] = radical_names
-       self.sample_parameters_inter['num_atms_don'] = num_atms_don
-       self.sample_parameters_inter['num_atms_rad'] = num_atms_rad
-       self.sample_parameters_inter['bonds_systems'] = bonds_systems
-       self.sample_parameters_inter['idx_radicals'] = idx_radicals
-       self.sample_parameters_inter['idx_h0s'] = idx_h0s
-       self.sample_parameters_inter['h_rad_distances'] = h_rad_distances
-       
-       self.sample_parameters_inter['idx_rad2'] = idx_r2
-       
-       self.energies_all_list = energies_sampled_all
-       ## export
-       
-       if not os.path.exists(outdir):
-           os.makedirs(outdir)
-       
-       fu.exportXYZs(coords_sampled_all, elements_sampled_all, '{}/{}_rad_inter_systems_coords.xyz'.format(outdir,sample_name) )
-       fu.exportXYZs(forces_sampled_all, elements_sampled_all, '{}/{}_rad_inter_systems_forces.xyz'.format(outdir, sample_name) ) # add info, change fct
-       fu.export_csv_rad_systems(outdir,sample_name, system_names, donor_names, radical_names, h_rad_distances, num_atms_don, num_atms_rad, bonds_systems, idx_radicals, idx_h0s, idx_r2)
-       
-       np.save('{}/{}_rad_inter_systems_energies.npy'.format(outdir, sample_name), energies_sampled_all, allow_pickle=True) 
-       np.save('{}/{}_rad_inter_systems_radii.npy'.format(outdir, sample_name,), h_rad_distances, allow_pickle=True) 
 
     def do_inter_rad_sampling_V2(self,sample_name, num_systems, num_config, outdir, rad_radius = [1.0, 4.2], mode = 'H_radical', radical_opt = False, system_list = []):
-        
-    
-           #path_to_files = self.indir
-           
-           #list_dirs_mols = glob.glob("{}/*/".format(path_to_files)) #adjust to file structure
-           #print(list_dirs_mols)
-           #path to nms files   
-           #list_dir_files_coords = glob.glob("{}/*/**/*_nms_samples_{}.xyz".format(path_to_files, self.sample_name))
+       
 
-       #coords_dir_list_mols = self.coords_infile_path_list
+       """
+        Perform inter-molecular radical sampling: For each system,
+        generate two-molecule radical complexes by removing H from each and
+        combining as an intermolecular system, with geometric and distance constraints.
+
+        Parameters
+        ----------
+        sample_name : str
+            Name for exported files.
+        num_systems : int
+            Number of unique pairs to sample (0 = all unique pairs).
+        num_config : int
+            Number of sampled configs per system pair.
+        outdir : str
+            Output directory for exports.
+        mode : str
+            Radical mode (default: 'H_radical').
+        rad_radius : list or str
+            Sampling radius range for radical–radical separation ([min,max] or 'chi2' for chi2 distribution).
+        reaction : bool
+            Whether to perform reaction mode (not yet implemented).
+        """
+    
        
        if system_list == []:
            coords_dir_list_mols = self.get_infile_path_list(self.indir_list)
@@ -845,15 +553,7 @@ class RadicalSampling():
                print('generated {} combinations'.format(len(all_combinations)))
             
            for combination_i in all_combinations:
-               
-               # choose randomly 2 molecules from file list
-               # draw random infile, load nms coords
-               #mols_paths_chosen = np.random.choice(coords_dir_list_mols, 2, replace=True)
-               #
-               #print('chosen 1', mols_paths_chosen[0], 'chosen 2', mols_paths_chosen[1])
-               # designate [0] as mol1 with H1 and [1] radical
-               
-               ## need to adapt to new structure! 
+                
                
                path_to_coords_1 = combination_i[0]
                #glob.glob('{}*_nms_samples_{}.xyz'.format(mols_chosen[0],nms_name))  ##adjust
@@ -937,24 +637,7 @@ class RadicalSampling():
                            
                            
                            #remove atom from molecule 2 and update 
-                           '''
-                           rad_idx, coords_2_init, elements_2_init, bond_idx_list_2, bond_atm_list_2, bond_lengths_list_2, coords_before_2, elements_before_2, bond_idx_list_before_2, bond_atm_list_before_2, bond_lengths_list_before_2 = rf.rmv_h_from_mol(
-                               h_idx_rm, rad_pos_idx, coords_2, elements_2, bond_idx_list_2, bond_atm_list_2, bond_lengths_list_2)
-                           
-                           # optimize radical 
-                           # add flag radical_opt 
-                           if radical_opt:
-                               #print('optimize radical') # rm outdir?
-                               num_atoms = len(coords_2_init)
-                               freeze_list = rf.get_neighbors(rad_idx, bond_idx_list_2, bond_atm_list_2, num_atoms)
-                               coords_2, elements_2 = xtb.optimize_geometry(coords_2_init, elements_2_init,charge = tot_chr_1, unp_e = 1, freeze_atms = freeze_list, solvent = self.solvent)
-                               if coords_2 == [] or len(coords_2) < num_atoms:
-                                   continue
-                            #print(coords_2)
-                           else:
-                               coords_2 = coords_2_init
-                               elements_2 = elements_2_init
-                           '''
+
                            
                            # translate H1 and H2 to (0,0)
                            coords_1_new = rf.translate_to_center(coords_1, h_idx_1)
@@ -1027,55 +710,7 @@ class RadicalSampling():
                        num_atms_don.append(len(coords_1_new))
                        num_atms_rad.append(len(coords_2_new))
                        
-                       # state 2
-             
-                       # e, f calc
-                       
-                       '''
-                       e_system_2 = xtb.single_point_energy(coords_final_2, elements_final_2, charge = tot_chr, unp_e = 1, solvent = self.solvent)
-                       f_system_2 = xtb.single_force(coords_final_2, elements_final_2, charge = tot_chr, unp_e = 1, solvent = self.solvent)
-                       
-                       coords_sampled_all.append(coords_final_2)
-                       elements_sampled_all.append(elements_final_2)
-                       
-                       h_rad_dist_2 = euclidean(coords_final_2[h1_idx_new_2], coords_final_2[rad_idx_new_2])
-                       
-                       h_rad_distances.append(h_rad_dist_2)
-                       
-                       system_names.append(system_name)
-                       bonds_systems.append(bond_idx_list_new_2)
-                       idx_radicals.append(rad_idx_new_2)
-                       idx_h0s.append(h1_idx_new_2)                   
-                       idx_r2.append(r2_idx_new_2)
-                       coords_h2.append(coords_before_h1)
-                       
-                       energies_sampled_all.append(e_system_2)
-                       forces_sampled_all.append(f_system_2)
-                       
-                       donor_names.append(mol_name_2)
-                       radical_names.append(mol_name_1)
-                       num_atms_don.append(len(coords_2_new))
-                       num_atms_rad.append(len(coords_1_new))
-                       '''
-                       
-                       '''
-                       # save 
-                       
-                       coords_sampled_all.append(coords_system)
-                       elements_sampled_all.append(elements_system)
-                       h_rad_distances.append(radius)
-                       system_name = '{}_and_{}'.format(mol_name_1, mol_name_2)
-                       system_names.append(system_name)
-                       donor_names.append(mol_name_1)
-                       radical_names.append(mol_name_2)
-                       num_atms_don.append(len(coords_1_new))
-                       num_atms_rad.append(len(coords_2_new))
-                       bonds_systems.append(bonds_system)
-                       idx_radicals.append(rad_idx_new)
-                       idx_h0s.append(h_idx_1)
-                       
-                       idx_r2.append(h_bond_1)
-                       '''
+                    
 
                else:
                    print('Need to implement reaction mode in radical functions.')
@@ -1119,9 +754,7 @@ class RadicalSampling():
                    coords_all_2, elements_all_2 = fu.readXYZs(path_to_coords_2)
                    
                
-               ## need to change to get mol names from chosen and vib info from indir
-               #print('path_to_coords_1', path_to_coords_1)
-               #print('path_to_coords_2', path_to_coords_2)
+             
                
                if self.infile_structure == 'cluster':
                    path_to_log_1, mol_name_1, path_to_log_2, mol_name_2 = self.get_mol_paths_cluster(path_to_coords_1, path_to_coords_2)
@@ -1187,26 +820,6 @@ class RadicalSampling():
                            
                            
                            
-                           #remove atom from molecule 2 and update 
-                           '''
-                           rad_idx, coords_2_init, elements_2_init, bond_idx_list_2, bond_atm_list_2, bond_lengths_list_2, coords_before_2, elements_before_2, bond_idx_list_before_2, bond_atm_list_before_2, bond_lengths_list_before_2 = rf.rmv_h_from_mol(
-                               h_idx_rm, rad_pos_idx, coords_2, elements_2, bond_idx_list_2, bond_atm_list_2, bond_lengths_list_2)
-                           
-                           # optimize radical 
-                           # add flag radical_opt 
-                           if radical_opt:
-                               #print('optimize radical') # rm outdir?
-                               num_atoms = len(coords_2_init)
-                               freeze_list = rf.get_neighbors(rad_idx, bond_idx_list_2, bond_atm_list_2, num_atoms)
-                               coords_2, elements_2 = xtb.optimize_geometry(coords_2_init, elements_2_init,charge = tot_chr_1, unp_e = 1, freeze_atms = freeze_list, solvent = self.solvent)
-                               if coords_2 == [] or len(coords_2) < num_atoms:
-                                   continue
-                            #print(coords_2)
-                           else:
-                               coords_2 = coords_2_init
-                               elements_2 = elements_2_init
-                           '''
-                           
                            # translate H1 and H2 to (0,0)
                            coords_1_new = rf.translate_to_center(coords_1, h_idx_1)
                            coords_2_new = rf.translate_to_center(coords_2, h_idx_rm)               
@@ -1268,54 +881,7 @@ class RadicalSampling():
                        num_atms_don.append(len(coords_1_new))
                        num_atms_rad.append(len(coords_2_new))
                        
-                       # state 2
-             
-                       # e, f calc
-                       '''
-                       e_system_2 = xtb.single_point_energy(coords_final_2, elements_final_2, charge = tot_chr, unp_e = 1, solvent = self.solvent)
-                       f_system_2 = xtb.single_force(coords_final_2, elements_final_2, charge = tot_chr, unp_e = 1, solvent = self.solvent)
                        
-                       coords_sampled_all.append(coords_final_2)
-                       elements_sampled_all.append(elements_final_2)
-                       
-                       h_rad_dist_2 = euclidean(coords_final_2[h1_idx_new_2], coords_final_2[rad_idx_new_2])
-                       
-                       h_rad_distances.append(h_rad_dist_2)
-                       
-                       system_names.append(system_name)
-                       bonds_systems.append(bond_idx_list_new_2)
-                       idx_radicals.append(rad_idx_new_2)
-                       idx_h0s.append(h1_idx_new_2)                   
-                       idx_r2.append(r2_idx_new_2)
-                       coords_h2.append(coords_before_h1)
-                       
-                       energies_sampled_all.append(e_system_2)
-                       forces_sampled_all.append(f_system_2)
-                       
-                       donor_names.append(mol_name_2)
-                       radical_names.append(mol_name_1)
-                       num_atms_don.append(len(coords_2_new))
-                       num_atms_rad.append(len(coords_1_new))
-                       '''
-                       '''
-                       # save 
-                       
-                       coords_sampled_all.append(coords_system)
-                       elements_sampled_all.append(elements_system)
-                       h_rad_distances.append(radius)
-                       system_name = '{}_and_{}'.format(mol_name_1, mol_name_2)
-                       system_names.append(system_name)
-                       donor_names.append(mol_name_1)
-                       radical_names.append(mol_name_2)
-                       num_atms_don.append(len(coords_1_new))
-                       num_atms_rad.append(len(coords_2_new))
-                       bonds_systems.append(bonds_system)
-                       idx_radicals.append(rad_idx_new)
-                       idx_h0s.append(h_idx_1)
-                       
-                       idx_r2.append(h_bond_1)
-                       '''
-    
                else:
                    print('Need to implement reaction mode in radical functions.')
            
