@@ -58,7 +58,7 @@ All demo data and outputs are found in the `data_generation/samples/` folder.
 This repository provides configuration files and evaluation scripts for benchmarking machine learning potentials on hydrogen atom transfer (HAT) reactions in peptides. For each model (SchNet, Allegro, MACE), we include the configuration used for training, as well as scripts for model evaluation and HAT reaction barrier calculation.
 
 **Note:**  
-To run the training and evaluation scripts, you will need to install the respective machine learning potential packages from their official repositories. Please refer to the documentation of each package for installation instructions.
+To run the training and evaluation of the models, you will need to install the respective machine learning potential packages from their official repositories. Please refer to the documentation of each package for installation instructions.
 
 Trained model weights and the full datasets provided on Zenodo and can be downloaded [here](https://doi.org/10.5281/zenodo.16572631).
 
@@ -70,7 +70,8 @@ Trained model weights and the full datasets provided on Zenodo and can be downlo
 - Produces parity plots and error histograms  
 
 USAGE:  
-    python evaluate_mace.py --model mace --eval_name dft_ID4 --pred_xyz path/to/predicted.xyz --ref_xyz path/to/reference.xyz
+    python evaluate_mace.py --model mace --eval_name dft_ID4 --pred_xyz path/to/mace_predictions.extxyz --ref_xyz path/to/dft_reference.extxyz  
+
 
 
 ---
