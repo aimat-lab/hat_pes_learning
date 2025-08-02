@@ -20,7 +20,7 @@ class RadicalSampling():
     from molecules and sampling both intra- and inter-molecular radical structures.
     """
 
-    def __init__(self,insystem_list, indir_list,indir_info,init_indir_list, solvent, t_nms, delE_nms, protonated=False, rad_dist = 2.0, infile_structure = 'cluster'):
+    def __init__(self,insystem_list, indir_list,indir_info,init_indir_list, solvent, t_nms, delE_nms, protonated=False, rad_dist = 2.0, infile_structure = None):
         
         """
         Initialize the RadicalSampling workflow and store parameters.
@@ -98,7 +98,7 @@ class RadicalSampling():
         """ 
 
        # Gather input XYZ file paths for intra sampling
-       coords_dir_list_mols = self.get_infile_path_list_intra(self.indir_list)
+       coords_dir_list_mols = self.get_infile_path_list_intra(self.indir_list, xyz_pattern="*nms_samples_*.xyz")
        
 
        coords_sampled_all, elements_sampled_all = [], []
@@ -114,14 +114,14 @@ class RadicalSampling():
        coords_h2 = []
        
        if num_systems == 0:
-           #Loop through *all* systems in coords_dir_list_mols
+           #Loop through all systems in coords_dir_list_mols
            for coords_dir in coords_dir_list_mols:
 
                
                path_to_coords_1 = coords_dir
 
                coords_all_1, elements_all_1 = fu.readXYZs(path_to_coords_1)
-               
+               print(len(coords_all_1), 'coords in file', path_to_coords_1)
 
                
                if self.infile_structure == 'cluster':
@@ -515,18 +515,21 @@ class RadicalSampling():
         reaction : bool
             Whether to perform reaction mode (not yet implemented).
         """
-    
        
+    
+       print("indir_list", self.indir_list)
+
        if system_list == []:
-           coords_dir_list_mols = self.get_infile_path_list(self.indir_list)
-           
+           coords_dir_list_mols = self.get_infile_path_list_inter(self.indir_list)
+           print("NMS sample files found:", coords_dir_list_mols)
            
        else:
-           coords_dir_list_mols_1 = self.get_infile_path_list(system_list[0])
-           coords_dir_list_mols_2 = self.get_infile_path_list(system_list[1])
+           coords_dir_list_mols_1 = self.get_infile_path_list_inter(system_list[0], partner=1)
+           coords_dir_list_mols_2 = self.get_infile_path_list_inter(system_list[1], partner=2)
+
+           print("coords_dir_list_1:", coords_dir_list_mols_1)
+           print("coords_dir_list_2:", coords_dir_list_mols_2)
            
-           #print(coords_dir_list_mols_1)
-           #print(coords_dir_list_mols_2)
 
        coords_sampled_all, elements_sampled_all = [], []
        energies_sampled_all, forces_sampled_all = [], []
@@ -578,11 +581,6 @@ class RadicalSampling():
                    path_to_log_1, mol_name_1, path_to_log_2, mol_name_2 = self.get_mol_paths(combination_i[0], combination_i[1])
                
                
-               
-               ## need to add more charge combinations!!
-               # get charges seperately and then add?
-               # count + and - in strings?
-               
                pos_chr_0 = mol_name_1.count('+')
                neg_chr_0 = -1*mol_name_1.count('-')
                tot_chr_0 = pos_chr_0+neg_chr_0
@@ -593,8 +591,6 @@ class RadicalSampling():
                
                tot_chr = tot_chr_0+tot_chr_1
                
-               #print(mol_name_1, mol_name_2)
-               # identify bonds and H
                if mode == 'H_radical':
                    
                    # get bond info here
@@ -603,7 +599,8 @@ class RadicalSampling():
                    bond_idx_list_2,bond_atm_list_2, bond_lengths_list_2 = rf.read_out_bonds(path_to_log_2)  
                    # differentiate cases amide, caps, aa
                    
-                   
+                   mol_name_1 = os.path.splitext(os.path.basename(path_to_coords_1))[0]
+                   mol_name_2 = os.path.splitext(os.path.basename(path_to_coords_2))[0]
                    
                    # all possible h tuples
                    atms_idx_h_tuples_1 = rf.get_aa_h(mol_name_1, bond_idx_list_1, bond_atm_list_1, bond_lengths_list_1, protonated = self.protonated) # protonated = 
@@ -675,12 +672,6 @@ class RadicalSampling():
                                    #print('no system False', e_system_1,  len(f_system_1))
                                    no_system = False
                            
-
-                           
-
-
-                       #print('h1', h_idx_1, 'r2', h_bond_1, 'rad', rad_idx_new, 'h2', h2_idx_new)
-                       #fu.exportXYZ(coords_system, elements_system, '{}/shifted_H_{}.xyz'.format(outdir,config_i ))
                        
 
                            
@@ -726,11 +717,6 @@ class RadicalSampling():
                    # choose randomly 2 molecules from file list
                    # draw random infile, load nms coords
                    mols_paths_chosen = np.random.choice(coords_dir_list_mols, 2, replace=True)
-                   #
-                   #print('chosen 1', mols_paths_chosen[0], 'chosen 2', mols_paths_chosen[1])
-                   # designate [0] as mol1 with H1 and [1] radical
-                   
-                   ## need to adapt to new structure! 
                    
                    path_to_coords_1 = mols_paths_chosen[0]
                    #glob.glob('{}*_nms_samples_{}.xyz'.format(mols_chosen[0],nms_name))  ##adjust
@@ -764,8 +750,6 @@ class RadicalSampling():
                
                
                ## need to add more charge combinations!!
-               # get charges seperately and then add?
-               # count + and - in strings?
                
                pos_chr_0 = mol_name_1.count('+')
                neg_chr_0 = -1*mol_name_1.count('-')
@@ -776,9 +760,7 @@ class RadicalSampling():
                tot_chr_1 = pos_chr_1+neg_chr_1
                
                tot_chr = tot_chr_0+tot_chr_1
-               
-               #print(mol_name_1, mol_name_2)
-               # identify bonds and H
+
                if mode == 'H_radical':
                    
                    # get bond info here
@@ -787,6 +769,8 @@ class RadicalSampling():
                    bond_idx_list_2,bond_atm_list_2, bond_lengths_list_2 = rf.read_out_bonds(path_to_log_2)  
                    # differentiate cases amide, caps, aa
                    
+                   mol_name_1 = os.path.splitext(os.path.basename(path_to_coords_1))[0]
+                   mol_name_2 = os.path.splitext(os.path.basename(path_to_coords_2))[0]
                    
                    
                    # all possible h tuples
@@ -993,7 +977,34 @@ class RadicalSampling():
         
         else:
             return False
-      
+        
+    def get_infile_path_list_inter(self, indir_list, partner=1):
+        """
+        Recursively collect all NMS .xyz files in the provided indir_list.
+        Ignores partner argument (used for interface compatibility).
+
+        Parameters
+        ----------
+        indir_list : list of str
+            List of top-level directories to search for NMS sample files.
+        partner : int
+            Unused; for compatibility.
+
+        Returns
+        -------
+        xyz_files : list of str
+            List of full paths to NMS .xyz files found in all dirs.
+        """
+        xyz_files = []
+        for indir in indir_list:
+            for dirpath, dirnames, filenames in os.walk(indir):
+                for filename in filenames:
+                    # If you want only NMS samples, check for a unique pattern:
+                    # e.g., 'nms_samples_' in filename
+                    if filename.endswith('.xyz') and 'nms_samples_' in filename:
+                        xyz_files.append(os.path.join(dirpath, filename))
+        return xyz_files
+ 
     def get_infile_path_list(self, indir_list):
         
         coords_infile_path_list = []
@@ -1017,71 +1028,42 @@ class RadicalSampling():
                 
         return coords_infile_path_list
 
-    def get_infile_path_list_intra(self, indir_list):
+    def get_infile_path_list_intra(self, indir_list, xyz_pattern="*.xyz", exclude_names=None):
         
         coords_infile_path_list = []
-        
-        nms_indir_list = []
-        
         for indir in indir_list:
-            #print(indir)  
-            list_dirs_mols = glob.glob("{}/*_T{}_Emax{}/".format(indir,self.nms_t, int(self.nms_delE)))
-            
-            for mol_dir in list_dirs_mols:
-                
-                nms_indir_list.append(mol_dir)
-                
-                
-        for dir_nms in nms_indir_list:
-            #print('nms dir', dir_nms)
-            if 'dip' in dir_nms:
-                path_to_coords = glob.glob('{}*nms_samples_*_T{}_Emax{}.xyz'.format(dir_nms, self.nms_t, int(self.nms_delE)))
-                
-                for path in path_to_coords:
-                    if 'Glycine_Glycine' in path:
-                        continue
-                    else:
-                        coords_infile_path_list.append(path)
-                    
-            else:
-                path_to_coords_1 = glob.glob('{}*nms_samples_*_T{}_Emax{}.xyz'.format(dir_nms, self.nms_t, int(self.nms_delE)))
-                
-                for path in path_to_coords_1:
-                    if 'Glycine' in path:
-                        continue
-                    else:
-                        coords_infile_path_list.append(path)
-                
+            # Recursively find all xyz files matching pattern
+            found = glob.glob(os.path.join(indir, "**", xyz_pattern), recursive=True)
+            for path in found:
+                # Optionally exclude files containing certain names
+                if exclude_names and any(ex in path for ex in exclude_names):
+                    continue
+                coords_infile_path_list.append(path)
         return coords_infile_path_list
 
 
 
-    def get_mol_paths(self, coord_path_mol_1, coord_path_mol_2):
+    def get_mol_paths(self, path_to_coords_1, path_to_coords_2):
+        """
+        Robustly find the vib_analysis_conf_0 folders and molecule names for two .xyz files.
+        """
+        # For molecule 1
+        parent_dir_1 = os.path.dirname(path_to_coords_1)
+        mol_name_1 = os.path.splitext(os.path.basename(path_to_coords_1))[0]
+        path_to_log_1 = os.path.join(parent_dir_1, "vib_analysis_conf_0")
+        if not os.path.isdir(path_to_log_1):
+            raise FileNotFoundError(f"No vib_analysis_conf_0 for: {path_to_coords_1}")
         
-        # get mol name
-        coord_file_1 = coord_path_mol_1.split('/')[-1]
-        coord_file_2 = coord_path_mol_2.split('/')[-1]
-        
-        pattern_to_rm = '_nms_samples_num*_T{}_Emax{}.xyz'.format(self.nms_t, int(self.nms_delE))
-        
-        mol_name_1 = rf.remove_variable_substring(coord_file_1, pattern_to_rm)
-        
-        mol_name_2 = rf.remove_variable_substring(coord_file_2, pattern_to_rm)
-        
-        system_file_1 = coord_path_mol_1.split('/')[1]        
-        system_name_1 = system_file_1.replace('nms_', '')
-        
-        system_file_2 = coord_path_mol_2.split('/')[1]        
-        system_name_2 = system_file_2.replace('nms_', '')
-        
+        # For molecule 2
+        parent_dir_2 = os.path.dirname(path_to_coords_2)
+        mol_name_2 = os.path.splitext(os.path.basename(path_to_coords_2))[0]
+        path_to_log_2 = os.path.join(parent_dir_2, "vib_analysis_conf_0")
+        if not os.path.isdir(path_to_log_2):
+            raise FileNotFoundError(f"No vib_analysis_conf_0 for: {path_to_coords_2}")
 
-        # get to path
-        
-        path_to_log_1 = glob.glob('{}/{}/*/{}/vib_analysis_conf_0'.format(self.indir_info, system_name_1, mol_name_1))[0]
-        
-        path_to_log_2 = glob.glob('{}/{}/*/{}/vib_analysis_conf_0'.format(self.indir_info, system_name_2, mol_name_2))[0]
-        
         return path_to_log_1, mol_name_1, path_to_log_2, mol_name_2
+
+
     
     def get_mol_paths_cluster(self, coord_path_mol_1, coord_path_mol_2): # 
         
@@ -1190,30 +1172,17 @@ class RadicalSampling():
         return path_to_log_1, mol_name_1
 
     def get_mol_paths_intra(self, coord_path_mol_1):
-        
-        # get mol name
-        coord_file_1 = coord_path_mol_1.split('/')[-1]
+        xyz_file = os.path.basename(coord_path_mol_1)            # Alanine_nms_samples_num20_T50_Emax5.xyz
+        parent_dir = os.path.dirname(coord_path_mol_1)            # samples/aa_test_nms/aa/Alanine
+        mol_name = os.path.splitext(xyz_file)[0]                  # Alanine_nms_samples_num20_T50_Emax5
 
+        # Look for vib_analysis_conf_0 inside the parent dir
+        vib_dir = os.path.join(parent_dir, 'vib_analysis_conf_0')
+        if not os.path.exists(vib_dir):
+            raise FileNotFoundError(f"vib_analysis_conf_0 not found in {parent_dir}")
         
-        pattern_to_rm = '_nms_samples_num*_T{}_Emax{}.xyz'.format(self.nms_t, int(self.nms_delE))
         
-        mol_name_1 = rf.remove_variable_substring(coord_file_1, pattern_to_rm)
-        
-
-        
-        system_file_1 = coord_path_mol_1.split('/')[1]        
-        system_name_1 = system_file_1.replace('nms_', '')
-        
-
-        
-
-        # get to path
-        
-        path_to_log_1 = glob.glob('{}/{}/*/{}/vib_analysis_conf_0'.format(self.indir_info, system_name_1, mol_name_1))[0]
-        
-
-        
-        return path_to_log_1, mol_name_1
+        return vib_dir, mol_name
 
 
     def all_list_combinations(self, input_list):

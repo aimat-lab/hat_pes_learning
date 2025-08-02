@@ -2944,8 +2944,73 @@ def get_h_aa(bond_idx_list, bond_atm_list, bond_lengths_list):
             else:
                 print('sth went wrong.')
 
+def get_aa_h(mol_name, bond_idx_list, bond_atm_list, bond_lengths_list, protonated=False):
+    """
+    Robustly determine which helper function to use for hydrogen removal based on molecule name.
+    Works for single amino acids, dipeptides, and is extensible.
 
-def get_aa_h(mol_name, bond_idx_list, bond_atm_list, bond_lengths_list, protonated = False):
+    Parameters
+    ----------
+    mol_name : str
+        Molecule name, e.g. 'Alanine_nms_samples_num20_T50_Emax5'
+    bond_idx_list, bond_atm_list, bond_lengths_list : list
+        Bond information from the structure
+    protonated : bool
+        Whether to use the protonated logic
+
+    Returns
+    -------
+    atms_idx_h_tuples : list
+        List of tuples describing H atom indices for radicalization
+    """
+    # --- Find the chemistry-relevant part of the name (the residues)
+    if "_nms_samples_" in mol_name:
+        prefix = mol_name.split("_nms_samples_")[0]
+    elif "_samples_" in mol_name:
+        prefix = mol_name.split("_samples_")[0]
+    else:
+        prefix = mol_name  # fallback for unusual cases
+
+    residue_names = prefix.split("_")
+    n_residues = len(residue_names)
+
+    # Uncomment for debugging:
+    # print(f"DEBUG: {mol_name} => {n_residues} residues ({residue_names})")
+
+    # --- If it's a capped peptide or amide, use existing logic
+    if 'cap' in mol_name or 'amide' in mol_name:
+        num_ = mol_name.count('_')
+        if 'cap' in mol_name:
+            if num_ == 1:
+                # Capped single AA
+                return get_h_aa_caps(bond_idx_list, bond_atm_list, bond_lengths_list)
+            if num_ == 2:
+                # Capped dipeptide
+                return get_h_aa_dip_caps(bond_idx_list, bond_atm_list, bond_lengths_list)
+        if 'amide' in mol_name:
+            return get_h_aa_amide(bond_idx_list, bond_atm_list, bond_lengths_list)
+    else:
+        if not protonated:
+            if n_residues == 1:
+                return get_h_aa(bond_idx_list, bond_atm_list, bond_lengths_list)
+            elif n_residues == 2:
+                return get_h_dip(bond_idx_list, bond_atm_list, bond_lengths_list)
+            else:
+                raise ValueError(
+                    f"[get_aa_h] Unrecognized residue count for '{mol_name}': found {n_residues} in {residue_names}"
+                )
+        else:
+            if n_residues == 1:
+                return get_h_aa_prot(bond_idx_list, bond_atm_list, bond_lengths_list)
+            elif n_residues == 2:
+                return get_h_dip_prot(bond_idx_list, bond_atm_list, bond_lengths_list)
+            else:
+                raise ValueError(
+                    f"[get_aa_h] Unrecognized residue count for protonated '{mol_name}': found {n_residues} in {residue_names}"
+                )
+
+
+def get_aa_h2(mol_name, bond_idx_list, bond_atm_list, bond_lengths_list, protonated = False):
     # added dip with caps 
     # need to adapt to dip wo caps and tri
     

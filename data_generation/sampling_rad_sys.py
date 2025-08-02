@@ -27,6 +27,7 @@ rad_gen = RadicalSampling(
     protonated=False
 )
 
+
 # Intra-molecular radical sampling 
 rad_gen.do_intra_rad_sampling(
     sample_name=sample_name,
@@ -36,6 +37,7 @@ rad_gen.do_intra_rad_sampling(
     mode='H_radical',
     radical_opt=False        # No post-H-removal optimization
 )
+
 
 #  Inter-molecular radical sampling
 rad_gen.do_inter_rad_sampling_V2(
