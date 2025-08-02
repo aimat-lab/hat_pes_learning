@@ -15,19 +15,19 @@ The workflow uses:
 
 ## Project Structure
 
-mol_data_generation/
-├── mol_construction/
-├── nms/
-├── radical_systems/
-├── reactions/
-├── utils/
-samples/
-├── aa_test_nms/
-├── aa_test_nms_radicals/
-├── aa_test_nms_hat/
-sampling_hat.py
-sampling_nms.py
-sampling_rad_sys.py
+mol_data_generation/  
+├── mol_construction/  
+├── nms/  
+├── radical_systems/  
+├── reactions/  
+├── utils/  
+samples/  
+├── aa_test_nms/  
+├── aa_test_nms_radicals/  
+├── aa_test_nms_hat/  
+sampling_hat.py  
+sampling_nms.py  
+sampling_rad_sys.py  
 
 ### Dependencies
 
@@ -69,6 +69,6 @@ If you use this code or data, please cite:
 - Neubert, M., Gräter, F., Friederich, P. (2025). [Learning Potential Energy Surfaces of Hydrogen Atom Transfer Reactions in Peptides](add link).
 - [Zenodo dataset](https://doi.org/10.5281/zenodo.16572631).
 
-For questions, contact .
+
 
 
