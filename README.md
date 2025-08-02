@@ -70,7 +70,7 @@ Trained model weights and the full datasets provided on Zenodo and can be downlo
 - Produces parity plots and error histograms  
 
 Usage:
-`bash python evaluate_mace.py --model mace --eval_name dft_ID4 --pred_xyz path/to/mace_predictions.extxyz --ref_xyz path/to/dft_reference.extxyz`    
+`python evaluate_mace.py --model mace --eval_name dft_ID4 --pred_xyz path/to/mace_predictions.extxyz --ref_xyz path/to/dft_reference.extxyz`    
 
 ---
 
