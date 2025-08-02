@@ -69,8 +69,8 @@ Trained model weights and the full datasets provided on Zenodo and can be downlo
 - Calculates HAT reaction barriers from predicted and reference data  
 - Produces parity plots and error histograms  
 
-USAGE:  
-    python evaluate_mace.py --model mace --eval_name dft_ID4 --pred_xyz path/to/mace_predictions.extxyz --ref_xyz path/to/dft_reference.extxyz  
+USAGE:
+<pre> ```bash python evaluate_mace.py --model mace --eval_name dft_ID4 --pred_xyz path/to/mace_predictions.extxyz --ref_xyz path/to/dft_reference.extxyz ``` </pre>   
 
 
 
