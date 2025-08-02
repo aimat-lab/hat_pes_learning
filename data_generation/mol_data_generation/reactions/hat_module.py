@@ -69,22 +69,7 @@ class HATSampling():
         forces_all, elements_f_all = fu.readXYZs('{}/{}'.format(self.indir, xyz_force_name))
         energies_init = np.load('{}/{}'.format(self.indir, energy_npy_name), allow_pickle = True)
         ## move H1 randomly in between molecules
-        
-        # collect sample parameters ? id, etc, shifted coords
-               
-        ## optimize systems
-        
-        # sphere & xtb optimization
-        
-        #save
-        
-        #coords_shifted_init = []
-        #elements_shifted_init = []
-        
-        #coords_hat_all = []
-        #elements_hat_all = []
-        #energies_hat_all = []
-        #forces_hat_all = []
+
         
         
         id_init_all = []
@@ -331,22 +316,7 @@ class HATSampling():
         energies_init = np.load('{}/{}'.format(self.indir, energy_npy_name), allow_pickle = True)
         ## move H1 randomly in between molecules
         
-        # collect sample parameters ? id, etc, shifted coords
-               
-        ## optimize systems
-        
-        # sphere & xtb optimization
-        
-        #save
-        
-        #coords_shifted_init = []
-        #elements_shifted_init = []
-        
-        #coords_hat_all = []
-        #elements_hat_all = []
-        #energies_hat_all = []
-        #forces_hat_all = []
-        
+
         
         id_init_all = []
         system_names_all = []

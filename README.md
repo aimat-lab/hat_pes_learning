@@ -62,6 +62,17 @@ To run the training and evaluation scripts, you will need to install the respect
 
 Trained model weights and the full datasets provided on Zenodo and can be downloaded [here](https://doi.org/10.5281/zenodo.16572631).
 
+### Evaluate the performance of a trained MACE or Allegro model on hydrogen atom transfer datasets.
+`evaluate_mace.py` / `evaluate_allegro.py`  
+
+- Computes energy and force errors (MAE, R2, normalized errors)  
+- Calculates HAT reaction barriers from predicted and reference data  
+- Produces parity plots and error histograms  
+
+USAGE:  
+    python evaluate_mace.py --model mace --eval_name dft_ID4 --pred_xyz path/to/predicted.xyz --ref_xyz path/to/reference.xyz
+
+
 ---
 
 If you use this code or data, please cite:
