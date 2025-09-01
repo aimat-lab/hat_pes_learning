@@ -76,7 +76,7 @@ Usage:
 
 If you use this code or data, please cite:
 
-- Neubert, M., Gräter, F., Friederich, P. (2025). [Learning Potential Energy Surfaces of Hydrogen Atom Transfer Reactions in Peptides](add link).
+- Neubert, M., Gräter, F., Friederich, P. (2025). [Learning Potential Energy Surfaces of Hydrogen Atom Transfer Reactions in Peptides](http://arxiv.org/abs/2508.00578).
 - [Zenodo dataset](https://doi.org/10.5281/zenodo.16572631).
 
 
