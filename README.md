@@ -72,12 +72,15 @@ Trained model weights and the full datasets are provided on Zenodo and can be do
 Usage:
 `python evaluate_mace.py --model mace --eval_name dft_ID4 --pred_xyz path/to/mace_predictions.extxyz --ref_xyz path/to/dft_reference.extxyz`    
 
+### MD simulations
+NVT MD simulations using trained MACE model and ASE:
+`run_md.py`
 ---
 
 If you use this code or data, please cite:
 
 - Neubert, M., Gräter, F., Friederich, P. (2025). [Learning Potential Energy Surfaces of Hydrogen Atom Transfer Reactions in Peptides](http://arxiv.org/abs/2508.00578).
-- [Zenodo dataset](https://doi.org/10.5281/zenodo.16572631).
+- [Zenodo dataset](https://doi.org/10.5281/zenodo.17670180).
 
 
 
