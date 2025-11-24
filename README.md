@@ -60,7 +60,7 @@ This repository provides configuration files and evaluation scripts for benchmar
 **Note:**  
 To run the training and evaluation of the models, you will need to install the respective machine learning potential packages from their official repositories. Please refer to the documentation of each package for installation instructions.
 
-Trained model weights and the full datasets are provided on Zenodo and can be downloaded [here](https://doi.org/10.5281/zenodo.16572631).
+Trained model weights and the full datasets are provided on Zenodo and can be downloaded [here](https://doi.org/10.5281/zenodo.17670180).
 
 ### Evaluate the performance of a trained MACE or Allegro model on hydrogen atom transfer datasets.
 `evaluate_mace.py` / `evaluate_allegro.py`  
@@ -74,8 +74,8 @@ Usage:
 
 ### MD simulations
 
-NVT MD simulations using a trained MACE model and ASE:
-`run_md.py`
+NVT MD simulations using a trained MACE model and ASE: `run_md.py`
+
 ---
 
 If you use this code or data, please cite:
