@@ -73,7 +73,8 @@ Usage:
 `python evaluate_mace.py --model mace --eval_name dft_ID4 --pred_xyz path/to/mace_predictions.extxyz --ref_xyz path/to/dft_reference.extxyz`    
 
 ### MD simulations
-NVT MD simulations using trained MACE model and ASE:
+
+NVT MD simulations using a trained MACE model and ASE:
 `run_md.py`
 ---
 
